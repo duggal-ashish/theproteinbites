@@ -1,8 +1,10 @@
 import React, { useContext, useState } from "react";
 import { CartContext } from "../App";
+import { useNavigate } from "react-router-dom";
 
 export default function Checkout() {
   const { cart, setCart } = useContext(CartContext);
+  const navigate = useNavigate();
 
   const [instructions, setInstructions] = useState({});
   const [address, setAddress] = useState({
@@ -15,7 +17,7 @@ export default function Checkout() {
     landmark: "",
   });
 
-  const [paymentMode, setPaymentMode] = useState(""); // required
+  const [paymentMode, setPaymentMode] = useState(""); 
   const [cardDetails, setCardDetails] = useState({
     name: "",
     number: "",
@@ -46,7 +48,6 @@ export default function Checkout() {
   const deliveryCharge = subtotal >= 399 ? 0 : 20;
   const total = subtotal + platformFee + deliveryCharge;
 
-  // Place Order
   const handlePlaceOrder = () => {
     if (
       !address.house ||
@@ -77,14 +78,8 @@ export default function Checkout() {
       }
     }
 
-    alert(`
-    ✅ Order Placed Successfully!
-    Subtotal: ₹${subtotal}
-    Platform Fee: ₹${platformFee}
-    Delivery: ₹${deliveryCharge}
-    Total: ₹${total}
-    Payment Mode: ${paymentMode === "card" ? "Card" : paymentMode === "upi" ? "UPI" : "Cash on Delivery"}
-  `);
+    alert("✅ Payment successful! Your order has been placed.");
+    navigate("/menu"); // redirect to menu after successful order
   };
 
   return (
@@ -99,9 +94,9 @@ export default function Checkout() {
           {cart.map((item, index) => (
             <div
               key={index}
-              className="flex justify-between items-center bg-white shadow p-4 rounded-lg"
+              className="flex justify-between items-start bg-white shadow p-4 rounded-lg"
             >
-              <div>
+              <div className="flex-1">
                 <h2 className="text-lg font-semibold">{item.name}</h2>
                 <p className="text-gray-500">{item.price}</p>
                 <textarea
@@ -115,7 +110,7 @@ export default function Checkout() {
               </div>
 
               {/* Quantity Controls */}
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-3 ml-4">
                 <button
                   onClick={() => updateQuantity(index, "decrease")}
                   className="px-3 py-1 bg-gray-200 text-black rounded-lg hover:bg-gray-300"
@@ -136,48 +131,29 @@ export default function Checkout() {
           {/* Address Section */}
           <div className="bg-white p-4 rounded-lg shadow space-y-3">
             <h2 className="text-xl font-semibold">Delivery Address</h2>
-            <input
-              placeholder="House / Flat No."
-              className="w-full border p-2 rounded"
-              value={address.house}
-              onChange={(e) => setAddress({ ...address, house: e.target.value })}
-            />
-            <input
-              placeholder="Street Name"
-              className="w-full border p-2 rounded"
-              value={address.street}
-              onChange={(e) => setAddress({ ...address, street: e.target.value })}
-            />
-            <input
-              placeholder="City"
-              className="w-full border p-2 rounded"
-              value={address.city}
-              onChange={(e) => setAddress({ ...address, city: e.target.value })}
-            />
-            <input
-              placeholder="District"
-              className="w-full border p-2 rounded"
-              value={address.district}
-              onChange={(e) => setAddress({ ...address, district: e.target.value })}
-            />
-            <input
-              placeholder="State"
-              className="w-full border p-2 rounded"
-              value={address.state}
-              onChange={(e) => setAddress({ ...address, state: e.target.value })}
-            />
-            <input
-              placeholder="Pincode"
-              className="w-full border p-2 rounded"
-              value={address.pincode}
-              onChange={(e) => setAddress({ ...address, pincode: e.target.value })}
-            />
-            <input
-              placeholder="Nearby Landmark (Optional)"
-              className="w-full border p-2 rounded"
-              value={address.landmark}
-              onChange={(e) => setAddress({ ...address, landmark: e.target.value })}
-            />
+            {["house", "street", "city", "district", "state", "pincode", "landmark"].map((field, i) => (
+              <input
+                key={i}
+                placeholder={
+                  field === "house"
+                    ? "House / Flat No."
+                    : field === "street"
+                    ? "Street Name"
+                    : field === "city"
+                    ? "City"
+                    : field === "district"
+                    ? "District"
+                    : field === "state"
+                    ? "State"
+                    : field === "pincode"
+                    ? "Pincode"
+                    : "Nearby Landmark (Optional)"
+                }
+                className="w-full border p-2 rounded"
+                value={address[field]}
+                onChange={(e) => setAddress({ ...address, [field]: e.target.value })}
+              />
+            ))}
           </div>
 
           {/* Payment Section */}
@@ -200,34 +176,26 @@ export default function Checkout() {
                     placeholder="Card Holder Name"
                     className="w-full border p-2 rounded"
                     value={cardDetails.name}
-                    onChange={(e) =>
-                      setCardDetails({ ...cardDetails, name: e.target.value })
-                    }
+                    onChange={(e) => setCardDetails({ ...cardDetails, name: e.target.value })}
                   />
                   <input
                     placeholder="Card Number"
                     className="w-full border p-2 rounded"
                     value={cardDetails.number}
-                    onChange={(e) =>
-                      setCardDetails({ ...cardDetails, number: e.target.value })
-                    }
+                    onChange={(e) => setCardDetails({ ...cardDetails, number: e.target.value })}
                   />
                   <div className="flex gap-2">
                     <input
                       placeholder="Exp Date (MM/YY)"
                       className="w-1/2 border p-2 rounded"
                       value={cardDetails.exp}
-                      onChange={(e) =>
-                        setCardDetails({ ...cardDetails, exp: e.target.value })
-                      }
+                      onChange={(e) => setCardDetails({ ...cardDetails, exp: e.target.value })}
                     />
                     <input
                       placeholder="CVV"
                       className="w-1/2 border p-2 rounded"
                       value={cardDetails.cvv}
-                      onChange={(e) =>
-                        setCardDetails({ ...cardDetails, cvv: e.target.value })
-                      }
+                      onChange={(e) => setCardDetails({ ...cardDetails, cvv: e.target.value })}
                     />
                   </div>
                 </div>

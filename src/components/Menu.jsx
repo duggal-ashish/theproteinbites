@@ -1,8 +1,50 @@
 import React, { useState, useContext } from "react";
-import { CartContext } from "../App";
+import { CartContext, AuthContext } from "../App"; // ✅ Ensure AuthContext for login check
+import { FaCartPlus } from "react-icons/fa";
 
-// ... your same menu data
-const menu = {
+export default function Menu() {
+  const [filter, setFilter] = useState("all");
+  const { cart, setCart } = useContext(CartContext);
+  const { isLoggedIn } = useContext(AuthContext); // ✅ Check login
+  const [quantities, setQuantities] = useState({});
+  const [expanded, setExpanded] = useState({});
+
+  const changeQuantity = (itemName, delta) => {
+    setQuantities((prev) => {
+      const newQty = Math.max(1, (prev[itemName] || 1) + delta);
+      return { ...prev, [itemName]: newQty };
+    });
+  };
+
+  const addToCart = (item) => {
+    if (!isLoggedIn) {
+      alert("⚠️ Please login to add items to cart!");
+      return;
+    }
+    const qty = quantities[item.name] || 1;
+    setCart((prev) => {
+      const existing = prev.find((cartItem) => cartItem.name === item.name);
+      if (existing) {
+        return prev.map((cartItem) =>
+          cartItem.name === item.name
+            ? { ...cartItem, quantity: cartItem.quantity + qty }
+            : cartItem
+        );
+      }
+      return [...prev, { ...item, quantity: qty }];
+    });
+    alert(`${item.name} added to cart (${qty})`);
+  };
+
+  const toggleExpand = (itemName) => {
+    setExpanded((prev) => ({
+      ...prev,
+      [itemName]: !prev[itemName],
+    }));
+  };
+
+  // dummy data (keep your existing menu data)
+  const menu = {
   "Salad": [
     { 
         name: "Blanch Veg. Salad", 
@@ -37,7 +79,7 @@ const menu = {
         rating: 4.5,
     },
     { 
-        name: "Paneer Blanch Salad", 
+        name: "Paneer Blanch", 
         price: "₹120", 
         ingredients: "Paneer, carrot, cucumber, broccoli, capsicum, baby corn, sweet corn, onion, iceberg, mushroom, spices.", 
         type: "veg" ,
@@ -123,42 +165,6 @@ const menu = {
   ],
 };
 
-export default function Menu() {
-  const [filter, setFilter] = useState("all"); 
-  const { cart, setCart } = useContext(CartContext);
-  const [quantities, setQuantities] = useState({});
-  const [expanded, setExpanded] = useState({}); // track which items are expanded
-
-  const changeQuantity = (itemName, delta) => {
-    setQuantities((prev) => {
-      const newQty = Math.max(1, (prev[itemName] || 1) + delta);
-      return { ...prev, [itemName]: newQty };
-    });
-  };
-
-  const addToCart = (item) => {
-    const qty = quantities[item.name] || 1;
-    setCart((prev) => {
-      const existing = prev.find((cartItem) => cartItem.name === item.name);
-      if (existing) {
-        return prev.map((cartItem) =>
-          cartItem.name === item.name
-            ? { ...cartItem, quantity: cartItem.quantity + qty }
-            : cartItem
-        );
-      }
-      return [...prev, { ...item, quantity: qty }];
-    });
-    alert(`${item.name} added to cart (${qty})`);
-  };
-
-  const toggleExpand = (itemName) => {
-    setExpanded((prev) => ({
-      ...prev,
-      [itemName]: !prev[itemName],
-    }));
-  };
-
   return (
     <div className="bg-gray-50 min-h-screen p-6">
       <h1 className="text-3xl font-bold text-center mb-6 text-green-700">
@@ -200,16 +206,14 @@ export default function Menu() {
                 return (
                   <div
                     key={index}
-                    className="bg-gradient-to-br from-[#f4ffe6] via-[#eafff1] to-[#7FB45A]/20 shadow-md rounded-xl p-4 hover:shadow-lg transition flex flex-col"
+                    className="bg-white shadow-md rounded-xl p-4 hover:shadow-lg transition flex flex-col"
                   >
-                    {/* Image */}
                     <img
                       src={item.img}
                       alt={item.name}
                       className="w-full h-40 object-cover rounded-lg"
                     />
 
-                    {/* Name + Price */}
                     <div className="flex justify-between items-center mt-3">
                       <h3 className="text-lg font-semibold text-gray-900">
                         {item.name}
@@ -219,10 +223,9 @@ export default function Menu() {
                       </span>
                     </div>
 
-                    {/* Ingredients with "See more" */}
                     <p
                       className={`text-sm text-gray-600 mt-2 ${
-                        !isExpanded ? "line-clamp-2 sm:line-clamp-none" : ""
+                        !isExpanded ? "line-clamp-2" : ""
                       }`}
                     >
                       {item.ingredients}
@@ -234,13 +237,11 @@ export default function Menu() {
                       {isExpanded ? "See less" : "See more"}
                     </button>
 
-                    {/* Rating */}
-                    <p className="mt-2 text-yellow-500 text-sm font-medium">
-                      ⭐ {item.rating}
-                    </p>
-
-                    {/* Veg / Non-Veg Dot */}
-                    <div className="mt-2">
+                    {/* Rating + Veg/NonVeg Dot */}
+                    <div className="mt-2 flex items-center gap-2 justify-between">
+                      <p className="text-yellow-500 text-sm font-medium">
+                        ⭐ {item.rating}
+                      </p>
                       <span
                         className={`inline-block w-3 h-3 rounded-full ${
                           item.type === "veg" ? "bg-green-600" : "bg-red-600"
@@ -266,11 +267,19 @@ export default function Menu() {
                           +
                         </button>
                       </div>
+
+                      {/* Add to cart - responsive */}
                       <button
                         onClick={() => addToCart(item)}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg"
+                        className="hidden sm:block px-4 py-2 bg-green-600 text-white rounded-lg"
                       >
                         Add to Cart
+                      </button>
+                      <button
+                        onClick={() => addToCart(item)}
+                        className="sm:hidden p-2 bg-green-600 text-white rounded-lg"
+                      >
+                        <FaCartPlus />
                       </button>
                     </div>
                   </div>
